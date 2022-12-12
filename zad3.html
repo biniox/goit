@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/basicLightbox/5.0.0/basicLightbox.min.js" integrity="sha512-jIc3kBeyfyLXBTmzUIXnbGiVK2wgWGcDIkJwkFW4bQ6v2h/piOKLwIfy3wOmKHWIu8DgYSKVth0DMUvExMYcOw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/basicLightbox/5.0.0/basicLightbox.min.css" integrity="sha512-C+KPK958JmUdU8B9SVr8YpEZtQ1T1XrFX/OLvE/lt336DFWXFHL5Y9/tUewMEU+Uy3dUAS363XXLdBine0WDyQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <form id="search-form">
+        <input
+            type="text"
+            name="query"
+            autocomplete="off"
+            placeholder="Search images..."
+        />
+    </form>
+    Galeria obrazów tworzy DOM-drzewo następnej struktury.
+    <ul></ul>
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html>
+<title>Online HTML Editor</title>
+<head>
+</head>
+<body>
+
+
+<script>
+const PIXABAY_API_KEY = '32029911-34d8575a6d4b8656a72576901';
+const PIXABAY_API_URL = 'https://pixabay.com/api/';
+
+const searchForm = document.querySelector('#search-form');
+const searchInput = searchForm.querySelector('input[name="query"]');
+const imageGallery = document.querySelector('ul');
+
+let page = 1;
+let isLoading = false;
+
+
+function debounce(func, wait) {
+    let timeout;
+  
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+  
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+}
+
+const fetchData = async () => {
+    isLoading = true;
+    const query = searchInput.value;
+    const response = await fetch(`${PIXABAY_API_URL}?key=${PIXABAY_API_KEY}&q=${query}&per_page=20&page=${page}`);
+    const data = await response.json();
+
+    for (const image of data.hits) {
+        const listItem = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = "#";
+        const img = document.createElement('img');
+        img.src = image.webformatURL;
+        img.dataset.source = image.largeImageURL;
+        img.alt = image.tags;
+        
+        link.appendChild(img);
+        listItem.appendChild(link);
+        imageGallery.appendChild(listItem);
+    }
+    page++;
+    isLoading = false;
+}
+
+const debouncedFetchData = debounce(async (event) => {
+    page = 1;
+    imageGallery.innerHTML = '';
+    const data = await fetchData();
+  }, 500);
+  
+  searchInput.addEventListener('keypress', debouncedFetchData);
+
+window.addEventListener('scroll', async () => {
+    if (!(window.innerHeight + window.scrollY >= document.body.offsetHeight)) return;
+    if (!isLoading) fetchData();
+});
+
+imageGallery.addEventListener('click', (event) => {
+    const img = event.target;
+    const source = img?.dataset?.source || null;
+    if(source) basicLightbox.create(`<img src="${source}">`).show();
+});
+
+</script>
+</body>
+</html>
